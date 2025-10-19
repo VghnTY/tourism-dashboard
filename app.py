@@ -142,25 +142,35 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Koneksi ke database PostgreSQL
 @st.cache_resource
 def get_database_connection():
-    """Membuat koneksi database yang cached"""
-    DB_USER = os.getenv('DB_USER', 'postgres')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', '')
-    DB_HOST = os.getenv('DB_HOST', 'localhost')
-    DB_PORT = os.getenv('DB_PORT', '5432')
-    DB_NAME = os.getenv('DB_NAME', 'tourism_warehouse')
-    
-    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    
+    """Koneksi ke Supabase dengan pooling"""
     try:
-        engine = create_engine(DATABASE_URL)
+        DB_USER = st.secrets["DB_USER"]
+        DB_PASSWORD = st.secrets["DB_PASSWORD"]
+        DB_HOST = st.secrets["DB_HOST"]
+        DB_PORT = st.secrets["DB_PORT"]
+        DB_NAME = st.secrets["DB_NAME"]
+        
+        # Gunakan connection pooling
+        DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        
+        # Tambahkan parameter connection
+        engine = create_engine(
+            DATABASE_URL,
+            pool_size=5,
+            max_overflow=10,
+            pool_pre_ping=True
+        )
+        
+        # Test connection dengan timeout
         with engine.connect() as conn:
-            pass
+            conn.execute("SELECT 1")
+            
         return engine
+        
     except Exception as e:
-        st.error(f"❌ Tidak dapat terhubung ke database: {e}")
+        st.error(f"❌ Database connection failed: {e}")
         return None
 
 @st.cache_data
