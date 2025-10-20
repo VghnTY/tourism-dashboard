@@ -3,7 +3,11 @@ import pandas as pd
 from sqlalchemy import create_engine
 import plotly.express as px
 import plotly.graph_objects as go
+import os
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
 
 # --- Konfigurasi halaman
 st.set_page_config(
@@ -142,11 +146,11 @@ st.markdown("""
 @st.cache_resource
 def get_database_connection():
     """Membuat koneksi database yang cached"""
-    DB_USER = "postgres"
-    DB_PASSWORD = "vaughn"  # GANTI dengan password PostgreSQL Anda
-    DB_HOST = "localhost"
-    DB_PORT = "5432"
-    DB_NAME = "tourism_warehouse"
+    DB_USER = os.getenv('DB_USER', 'postgres')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', '')
+    DB_HOST = os.getenv('DB_HOST', 'localhost')
+    DB_PORT = os.getenv('DB_PORT', '5432')
+    DB_NAME = os.getenv('DB_NAME', 'tourism_warehouse')
     
     DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     
