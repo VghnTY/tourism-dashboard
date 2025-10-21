@@ -582,7 +582,7 @@ def main():
                 top_wisata = top_wisata.sort_values('Place_Ratings', ascending=False).head(10)
 
                 if not top_wisata.empty:
-                    st.markdown(f'<div class="section-title">🏅 Top 10 {pilih_kategori}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="section-title">🏅 Top 5 {pilih_kategori}</div>', unsafe_allow_html=True)
                     
                     # Display as cards
                     for idx, row in top_wisata.head(5).iterrows():
