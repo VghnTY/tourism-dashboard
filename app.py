@@ -1,13 +1,7 @@
 import streamlit as st
 import pandas as pd
-from sqlalchemy import create_engine
 import plotly.express as px
 import plotly.graph_objects as go
-import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # --- Konfigurasi halaman
 st.set_page_config(
@@ -142,36 +136,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Koneksi ke database PostgreSQL
-@st.cache_resource
-def get_database_connection():
-    """Membuat koneksi database yang cached"""
-    DB_USER = os.getenv('DB_USER', 'postgres')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', '')
-    DB_HOST = os.getenv('DB_HOST', 'localhost')
-    DB_PORT = os.getenv('DB_PORT', '5432')
-    DB_NAME = os.getenv('DB_NAME', 'tourism_warehouse')
-    
-    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    
-    try:
-        engine = create_engine(DATABASE_URL)
-        with engine.connect() as conn:
-            pass
-        return engine
-    except Exception as e:
-        st.error(f"❌ Tidak dapat terhubung ke database: {e}")
-        return None
-
+# --- Load data langsung dari CSV files
 @st.cache_data
-def load_data(_engine, table_name):
-    """Load data dari tabel dengan caching"""
+def load_data():
+    """Load data langsung dari CSV files"""
     try:
-        df = pd.read_sql(f"SELECT * FROM {table_name}", _engine)
-        return df
+        # Load dari CSV files
+        tourism_df = pd.read_csv("data/tourism_with_id.csv")
+        rating_df = pd.read_csv("data/tourism_rating.csv")
+        user_df = pd.read_csv("data/user.csv")
+        package_df = pd.read_csv("data/package_tourism.csv")
+        
+        st.sidebar.success("✅ Data loaded from CSV files")
+        return tourism_df, rating_df, user_df, package_df
+        
     except Exception as e:
-        st.error(f"❌ Gagal memuat tabel {table_name}: {e}")
-        return pd.DataFrame()
+        st.error(f"❌ Error loading CSV files: {e}")
+        return None, None, None, None
 
 # --- Function untuk membuat metric card
 def metric_card(title, value, delta=None, delta_color="normal"):
@@ -186,43 +167,30 @@ def metric_card(title, value, delta=None, delta_color="normal"):
         """, unsafe_allow_html=True)
 
 def main():
-    # Dapatkan koneksi database
-    engine = get_database_connection()
+    # Load data langsung dari CSV
+    tourism_df, rating_df, user_df, package_df = load_data()
     
-    if engine is None:
+    if tourism_df is None:
         st.error("""
-        🔧 **Database Connection Troubleshooting:**
-        1. Pastikan PostgreSQL berjalan
-        2. Cek password di kode (ganti 'your_password_here')
-        3. Pastikan database 'tourism_warehouse' ada
-        4. Jalankan etl.py terlebih dahulu untuk membuat tabel
+        🔧 **Troubleshooting:**
+        1. Pastikan file CSV ada di folder 'data/'
+        2. File yang diperlukan: tourism_with_id.csv, tourism_rating.csv, user.csv, package_tourism.csv
+        3. Pastikan struktur folder benar
         """)
         return
     
-    # Load data dengan error handling
-    try:
-        with st.spinner('🔄 Memuat data dari database...'):
-            tourism_df = load_data(engine, "tourism_with_id")
-            rating_df = load_data(engine, "tourism_rating")
-            user_df = load_data(engine, "users")
-            package_df = load_data(engine, "package_tourism")
-            
-        # Cek jika ada DataFrame yang kosong
-        if tourism_df.empty:
-            st.error("Tabel 'tourism_with_id' kosong atau tidak ada. Jalankan etl.py terlebih dahulu!")
-            return
-        if rating_df.empty:
-            st.error("Tabel 'tourism_rating' kosong atau tidak ada.")
-            return
-        if user_df.empty:
-            st.error("Tabel 'users' kosong atau tidak ada.")
-            return
-        if package_df.empty:
-            st.error("Tabel 'package_tourism' kosong atau tidak ada.")
-            return
-        
-    except Exception as e:
-        st.error(f"❌ Error memuat data: {e}")
+    # Cek jika ada DataFrame yang kosong
+    if tourism_df.empty:
+        st.error("File 'tourism_with_id.csv' kosong atau tidak terbaca!")
+        return
+    if rating_df.empty:
+        st.error("File 'tourism_rating.csv' kosong atau tidak terbaca!")
+        return
+    if user_df.empty:
+        st.error("File 'user.csv' kosong atau tidak terbaca!")
+        return
+    if package_df.empty:
+        st.error("File 'package_tourism.csv' kosong atau tidak terbaca!")
         return
 
     # --- Sidebar Navigasi
