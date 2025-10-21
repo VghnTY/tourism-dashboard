@@ -147,7 +147,6 @@ def load_data():
         user_df = pd.read_csv("data/user.csv")
         package_df = pd.read_csv("data/package_tourism.csv")
         
-        st.sidebar.success("✅ Data loaded from CSV files")
         return tourism_df, rating_df, user_df, package_df
         
     except Exception as e:
